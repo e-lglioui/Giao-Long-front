@@ -140,7 +140,6 @@ export function LoginForm() {
           <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500/20 via-red-500/20 to-amber-500/20 blur-3xl" />
         </motion.div>
 
-        {/* Main image with golden border effect */}
         <motion.div
           className="absolute inset-0 "
           initial={{ opacity: 0 }}
