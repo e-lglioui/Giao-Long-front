@@ -14,9 +14,9 @@ function App() {
         
         {/* Private Route for Dashboard */}
         <Route path="/dashboard" element={
-          <PrivateRoute>
+          // <PrivateRoute>
             <DashboardLayout />
-          </PrivateRoute>
+          // {/* </PrivateRoute> */}
         }>
           <Route index element={<DashboardHome />} /> {/* Default route within DashboardLayout */}
         </Route>
