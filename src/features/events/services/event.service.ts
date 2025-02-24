@@ -32,26 +32,26 @@ export const eventService = {
     return data;
   },
 
-  async createEvent(event: CreateEventDto) {
-    try{
-    const { data } = await api.post<Event>(EVENTS_URL, event);
-    return data;
-    }catch(error){
-      if (error instanceof AxiosError) {
-        const message = error.response?.data?.message 
-          || error.response?.data?.error 
-          || 'Failed to create event';
-          
-        throw new ApiError(
-          message,
-          error.response?.status,
-          error.response?.data?.errors
-        );
+  async createEvent (eventData: CreateEventDto)  {
+    try {
+      const response = await fetch("/api/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventData),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw { name: "ApiError", message: errorData.message || "Failed to create event" };
       }
+  
+      return await response.json();
+    } catch (error: any) {
       throw error;
     }
   },
-
   async updateEvent(id: string, event: UpdateEventDto) {
     const { data } = await api.put<Event>(`${EVENTS_URL}/${id}`, event);
     return data;
