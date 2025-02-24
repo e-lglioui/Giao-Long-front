@@ -8,11 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion } from "framer-motion";
+import { toast } from "react-hot-toast"; 
 import loginImage from '@/assets/login.jpg';
+import { useNavigate } from "react-router-dom";
 
 const registerSchema = z.object({
   username: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
+  firstName: z.string().min(2, "First name must be at least 2 characters").trim(),
+  lastName: z.string().min(2, "Last name must be at least 2 characters").trim(),
+  email: z.string().email("Invalid email address").trim().toLowerCase(),
   password: z.string()
     .min(8, "Password must be at least 8 characters")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
@@ -27,20 +31,46 @@ const registerSchema = z.object({
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
-  const { register: registerUser } = useAuth();
+  const { register: registerUser, isLoading, error } = useAuth();
+  const navigate = useNavigate();
   
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   });
 
   const onSubmit = async (data: RegisterFormData) => {
-    await registerUser(data);
-  };
+    try {
+      console.log('Submitting registration data:', data);
+      
+      const { confirmPassword, ...registrationData } = data;
+      
+      const response = await registerUser(registrationData);
+      
+      // Show success message
+      toast.success(response.message);
 
+      // Always redirect to check-email page since email confirmation is required
+      navigate('/auth/check-email', { 
+        state: { 
+          email: data.email,
+          message: response.message || 'Please check your email to confirm your account.'
+        }
+        });
+    } catch (error) {
+      console.error('Registration error:', error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Registration failed. Please try again.');
+      }
+    }
+  };
+  
+ 
   return (
     <div className="flex min-h-screen bg-black"> 
       <div className="flex-1 flex items-center justify-center">
@@ -54,13 +84,44 @@ export function RegisterForm() {
             </p>
           </CardHeader>
           <CardContent>
+            {error && (
+              <Alert variant="destructive" className="mb-6 bg-red-900/50 border border-red-500">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="firstName" className="text-gray-300">First Name</Label>
+                <Input
+                  {...register("firstName")}
+                  type="text"
+                  placeholder="Enter your first name"
+                  className="bg-gray-800/50 text-white border-2 border-gray-700 focus:border-amber-500 transition-all duration-300 placeholder:text-gray-500"
+                />
+                {errors.firstName && (
+                  <p className="text-sm text-red-400">{errors.firstName.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="text-gray-300">Last Name</Label>
+                <Input
+                  {...register("lastName")}
+                  type="text"
+                  placeholder="Enter your last name"
+                  className="bg-gray-800/50 text-white border-2 border-gray-700 focus:border-amber-500 transition-all duration-300 placeholder:text-gray-500"
+                />
+                {errors.lastName && (
+                  <p className="text-sm text-red-400">{errors.lastName.message}</p>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-gray-300">Warrior Name</Label>
                 <Input
                   {...register("username")}
                   type="text"
-                  placeholder="Enter your name"
+                  placeholder="Enter your warrior name"
                   className="bg-gray-800/50 text-white border-2 border-gray-700 focus:border-amber-500 transition-all duration-300 placeholder:text-gray-500"
                 />
                 {errors.username && (
@@ -110,9 +171,9 @@ export function RegisterForm() {
               <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-amber-500 via-red-500 to-amber-500 hover:from-amber-600 hover:via-red-600 hover:to-amber-600 text-white font-semibold py-2 transition-all duration-300 shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50"
-                disabled={isSubmitting}
+                disabled={isLoading}
               >
-                {isSubmitting ? (
+                {isLoading ? (
                   <div className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
                     <span className="ml-2">Joining...</span>

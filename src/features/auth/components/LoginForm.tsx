@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion } from "framer-motion";
 import loginImage from '@/assets/login.jpg';
+import { useNavigate } from "react-router-dom";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -20,6 +21,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const { login, isLoading, error } = useAuth();
+  const navigate = useNavigate();
   
   const {
     register,
@@ -30,7 +32,12 @@ export function LoginForm() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    await login(data);
+    try {
+      await login(data);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Login error:', error);
+    }
   };
 
   return (

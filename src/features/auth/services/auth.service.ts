@@ -2,11 +2,25 @@ import api from '@/services/api';
 import { storage } from '../../../utils/storage';
 import { jwtDecode } from "jwt-decode";
 import { ENDPOINTS } from '@/services/endpoints';
+
 export interface RegisterCredentials {
   email: string;
   password: string;
   username: string;
-  confirmPassword: string;
+  firstName: string;
+  lastName: string;
+}
+
+interface RegisterResponse {
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    isConfirmed: boolean;
+  };
+  access_token: string;
+  message: string;
+  requiresEmailConfirmation: boolean;
 }
 
 const handleError = (error: any): Error => {
@@ -27,8 +41,8 @@ interface LoginResponse {
 }
 
 interface DecodedToken {
-  sub: string;      // ID de l'utilisateur
-  username: string; // Nom d'utilisateur
+  sub: string;      // User ID
+  username: string; // Username
   exp: number;      // Expiration
   iat: number;      // Issued at
 }
@@ -48,17 +62,14 @@ class AuthService {
         throw new Error('No token received');
       }
 
-      // Décode le token pour obtenir les informations utilisateur
       const decoded = jwtDecode<DecodedToken>(data.access_token);
       console.log('Decoded token:', decoded);
 
-      // Crée l'objet utilisateur à partir des données du token
       const user: User = {
         id: decoded.sub,
         username: decoded.username
       };
 
-      // Stocke le token et les informations utilisateur
       storage.setToken(data.access_token);
       storage.setUser(user);
 
@@ -69,30 +80,58 @@ class AuthService {
     }
   }
 
-  async register(credentials: RegisterCredentials) {
+  async register(credentials: RegisterCredentials): Promise<RegisterResponse> {
     try {
-      const { data } = await api.post<LoginResponse>(ENDPOINTS.AUTH.REGISTER, credentials);
-      console.log('Login response:', data);
+      console.log('Sending registration request with data:', credentials);
+      
+      const { data } = await api.post<RegisterResponse>(ENDPOINTS.AUTH.REGISTER, credentials);
+      console.log('Registration response:', data);
 
       if (!data.access_token) {
         throw new Error('No token received');
       }
 
-      // Décode le token pour obtenir les informations utilisateur
-      const decoded = jwtDecode<DecodedToken>(data.access_token);
-      console.log('Decoded token:', decoded);
-
-      // Crée l'objet utilisateur à partir des données du token
-      const user: User = {
-        id: decoded.sub,
-        username: decoded.username
-      };
-
-      // Stocke le token et les informations utilisateur
       storage.setToken(data.access_token);
-      storage.setUser(user);
+      storage.setUser(data.user);
 
-      return { user, token: data.access_token };
+      return {
+        user: data.user,
+        access_token: data.access_token,
+        message: data.message,
+        requiresEmailConfirmation: !data.user.isConfirmed
+      };
+    } catch (error: any) {
+      console.error('Registration error in service:', error.response?.data || error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Registration failed. Please try again.');
+    }
+  }
+
+  // Add the missing methods
+  async confirmEmail(token: string): Promise<void> {
+    try {
+      await api.post(ENDPOINTS.AUTH.CONFIRM_EMAIL, { token });
+    } catch (error) {
+      throw handleError(error);
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    try {
+      await api.post(ENDPOINTS.AUTH.RESET_PASSWORD, {
+        token,
+        newPassword
+      });
+    } catch (error) {
+      throw handleError(error);
+    }
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    try {
+      await api.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
     } catch (error) {
       throw handleError(error);
     }
@@ -131,4 +170,4 @@ class AuthService {
   }
 }
 
-export const authService = new AuthService(); 
+export const authService = new AuthService();
