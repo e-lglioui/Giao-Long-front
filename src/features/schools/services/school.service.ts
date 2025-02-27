@@ -1,7 +1,7 @@
 import api from '@/services/api';
 import { School, CreateSchoolDto, UpdateSchoolDto } from '../types/school.types';
 
-const SCHOOLS_URL = '/schools';
+const SCHOOLS_URL = 'http://localhost:3000/schools';
 
 export class ApiError extends Error {
   constructor(
@@ -28,7 +28,7 @@ export const schoolService = {
 
   async getAllSchools(): Promise<School[]> {
     try {
-      const { data } = await api.get<School[]>(SCHOOLS_URL);
+      const { data } = await api.get<School[]>( SCHOOLS_URL);
       return data;
     } catch (error: any) {
       throw new ApiError(

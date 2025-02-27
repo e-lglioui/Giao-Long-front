@@ -1,5 +1,9 @@
-import { useState } from "react";
-import { Link, useLocation, Outlet } from "react-router-dom";
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import { Link, useLocation, Outlet } from "react-router-dom"
 import {
   LayoutDashboard,
   Users,
@@ -14,15 +18,16 @@ import {
   CheckCircle,
   FileText,
   Award,
-} from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/toaster";
+  UserCircle,
+} from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
+import { Button } from "@/components/ui/button"
+import { Toaster } from "@/components/ui/toaster"
 
 // Définition du type User
 interface User {
-  id: string;
-  username?: string;
+  id: string
+  username?: string
 }
 
 const menuItems = [
@@ -82,20 +87,25 @@ const menuItems = [
     path: "/dashboard/finance",
   },
   {
+    title: "Profil",
+    icon: UserCircle,
+    path: "/dashboard/profile",
+  },
+  {
     title: "Paramètres",
     icon: Settings,
     path: "/dashboard/settings",
   },
-];
+]
 
 interface DashboardLayoutProps {
-  children: React.ReactNode;
+  children: React.ReactNode
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { logout, user } = useAuth();
-  const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const { logout, user } = useAuth()
+  const location = useLocation()
 
   return (
     <>
@@ -115,7 +125,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {/* Navigation */}
             <nav className="flex-1 space-y-1 p-4">
               {menuItems.map((item) => {
-                const isActive = location.pathname === item.path;
+                const isActive = location.pathname === item.path
                 return (
                   <Link
                     key={item.path}
@@ -127,7 +137,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <item.icon className="h-5 w-5" />
                     <span>{item.title}</span>
                   </Link>
-                );
+                )
               })}
             </nav>
 
@@ -162,5 +172,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
       <Toaster />
     </>
-  );
+  )
 }
+

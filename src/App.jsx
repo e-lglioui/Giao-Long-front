@@ -16,7 +16,12 @@ import { CheckEmail } from '@/features/auth/components/CheckEmail';
 import { ForgotPassword } from '@/features/auth/components/ForgotPassword';
 import { ResetPassword } from '@/features/auth/components/ResetPassword';
 import { ConfirmEmail } from '@/features/auth/components/ConfirmEmail';
-
+import { ManageMembersForm } from '@/features/schools/components/ManageMembersForm';
+// Import des composants d'écoles
+import { SchoolsList } from '@/features/schools/components/SchoolsList';
+import { CreateSchoolForm } from '@/features/schools/components/CreateSchoolForm';
+import { SchoolDetailPage } from '@/features/schools/pages/SchoolDetailPage';
+import ProfilePage from "@/features/profile/components/ProfilePage"
 function App() {
   return (
     <Router>
@@ -45,6 +50,8 @@ function App() {
           <Route index element={<Navigate to="statistiques" replace />} />
           <Route path="statistiques" element={<DashboardHome />} />
           <Route path="my-events" element={<MyEventsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          {/* Routes des événements */}
           <Route path="events" element={<EventsListPage />} />
           <Route path="events/create" element={<CreateEventPage />} />
           <Route path="events/:id" element={<EventDetailPage />} />
@@ -52,6 +59,22 @@ function App() {
           <Route path="events/:eventId/participants/edit/:participantId" element={<UpdateParticipantPage />} />
           <Route path="events/:eventId/participants/search" element={<ParticipantSearchPage />} />
           <Route path="events/:eventId/participants/new" element={<RegisterParticipantPage />} />
+
+          {/* Routes des écoles */}
+          <Route path="schools">
+            <Route index element={<SchoolsList />} />
+            <Route path="create" element={<CreateSchoolForm />} />
+            <Route path=":id" element={<SchoolDetailPage />} />
+            <Route path=":id/edit" element={<CreateSchoolForm />} />
+            <Route path=":schoolId/instructors">
+              <Route path="add" element={<ManageMembersForm />} />
+              <Route path=":instructorId/edit" element={<ManageMembersForm />} />
+            </Route>
+            <Route path=":schoolId/students">
+              <Route path="add" element={<ManageMembersForm />} />
+              <Route path=":studentId/edit" element={<ManageMembersForm />} />
+            </Route>
+          </Route>
         </Route>
 
         {/* Root Redirect */}
