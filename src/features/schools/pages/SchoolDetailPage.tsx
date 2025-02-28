@@ -77,7 +77,7 @@ export function SchoolDetailPage() {
         <div className="space-x-4">
           <Button
             variant="outline"
-            onClick={() => navigate(`/schools/${id}/edit`)}
+            onClick={() => navigate(`/dashboard/schools/${id}/edit`)}
           >
             <Edit className="w-4 h-4 mr-2" />
             Edit

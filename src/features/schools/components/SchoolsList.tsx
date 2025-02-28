@@ -96,7 +96,7 @@ export function SchoolsList() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Kung Fu Schools</h2>
-        <Button onClick={() => navigate('/schools/create')}>
+        <Button onClick={() => navigate('/dashboard/schools/create')}>
           <Plus className="w-4 h-4 mr-2" />
           Add New School
         </Button>
@@ -114,7 +114,7 @@ export function SchoolsList() {
             <Card
               key={school._id}
               className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigate(`/schools/${school._id}`)}
+              onClick={() => navigate(`/dashboard/schools/${school._id}`)}
             >
               <CardContent className="p-6">
                 <h3 className="text-xl font-semibold mb-2">{school.name}</h3>
