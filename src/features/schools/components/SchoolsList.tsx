@@ -1,110 +1,107 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { SchoolFilters, type SchoolFilters as Filters } from './SchoolFilters';
-import { Pagination } from './Pagination';
-import { School } from '../types/school.types';
-import { schoolService } from '../services/school.service';
-import { useToast } from "@/components/ui/use-toast";
-import { Plus, Users, MapPin, Image } from 'lucide-react';
+"use client"
 
-const ITEMS_PER_PAGE = 9;
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { SchoolFilters, type SchoolFilters as Filters } from "./SchoolFilters"
+import { Pagination } from "./Pagination"
+import type { School } from "../types/school.types"
+import { schoolService } from "../services/school.service"
+import { useToast } from "@/components/ui/use-toast"
+import { Plus, Users, MapPin, Image } from "lucide-react"
+import { getImageUrl, handleImageError } from "../utils/image-utils"
+
+const ITEMS_PER_PAGE = 9
 
 export function SchoolsList() {
-  const [schools, setSchools] = useState<School[]>([]);
-  const [filteredSchools, setFilteredSchools] = useState<School[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [schools, setSchools] = useState<School[]>([])
+  const [filteredSchools, setFilteredSchools] = useState<School[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [isLoading, setIsLoading] = useState(true)
+  const navigate = useNavigate()
+  const { toast } = useToast()
 
   useEffect(() => {
-    loadSchools();
-  }, []);
+    loadSchools()
+  }, [])
 
   const loadSchools = async () => {
     try {
-      setIsLoading(true);
-      const data = await schoolService.getAllSchools();
-      setSchools(data);
-      setFilteredSchools(data);
+      setIsLoading(true)
+      const data = await schoolService.getAllSchools()
+      setSchools(data)
+      setFilteredSchools(data)
     } catch (error) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to load schools",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleFilterChange = (filters: Filters) => {
-    let filtered = [...schools];
+    let filtered = [...schools]
 
     // Apply search filter
     if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(school => 
-        school.name.toLowerCase().includes(searchLower) ||
-        school.address.toLowerCase().includes(searchLower)
-      );
+      const searchLower = filters.search.toLowerCase()
+      filtered = filtered.filter(
+        (school) =>
+          school.name.toLowerCase().includes(searchLower) || school.address.toLowerCase().includes(searchLower),
+      )
     }
 
     // Apply student count filters
     if (filters.minStudents) {
-      filtered = filtered.filter(school => 
-        school.dashboard.studentCount >= filters.minStudents!
-      );
+      filtered = filtered.filter((school) => school.dashboard.studentCount >= filters.minStudents!)
     }
     if (filters.maxStudents) {
-      filtered = filtered.filter(school => 
-        school.dashboard.studentCount <= filters.maxStudents!
-      );
+      filtered = filtered.filter((school) => school.dashboard.studentCount <= filters.maxStudents!)
     }
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let comparison = 0;
+      let comparison = 0
       switch (filters.sortBy) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name);
-          break;
-        case 'studentCount':
-          comparison = a.dashboard.studentCount - b.dashboard.studentCount;
-          break;
-        case 'revenue':
-          comparison = a.dashboard.revenue - b.dashboard.revenue;
-          break;
+        case "name":
+          comparison = a.name.localeCompare(b.name)
+          break
+        case "studentCount":
+          comparison = a.dashboard.studentCount - b.dashboard.studentCount
+          break
+        case "revenue":
+          comparison = a.dashboard.revenue - b.dashboard.revenue
+          break
       }
-      return filters.sortOrder === 'asc' ? comparison : -comparison;
-    });
+      return filters.sortOrder === "asc" ? comparison : -comparison
+    })
 
-    setFilteredSchools(filtered);
-    setCurrentPage(1);
-  };
+    setFilteredSchools(filtered)
+    setCurrentPage(1)
+  }
 
-  const paginatedSchools = filteredSchools.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const paginatedSchools = filteredSchools.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
-  const totalPages = Math.ceil(filteredSchools.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredSchools.length / ITEMS_PER_PAGE)
 
+  // Get the first image as thumbnail or return a placeholder
   // Get the first image as thumbnail or return a placeholder
   const getSchoolThumbnail = (school: School) => {
     if (school.images && school.images.length > 0) {
-      return school.images[0];
+      return getImageUrl(school.images[0])
     }
-    return "../../../assets/placeholder-image.png";
-  };
+    return "/placeholder.svg?height=192&width=384"
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Kung Fu Schools</h2>
-        <Button onClick={() => navigate('/dashboard/schools/create')}>
+        <Button onClick={() => navigate("/dashboard/schools/create")}>
           <Plus className="w-4 h-4 mr-2" />
           Add New School
         </Button>
@@ -125,13 +122,11 @@ export function SchoolsList() {
               onClick={() => navigate(`/dashboard/schools/${school._id}`)}
             >
               <div className="h-40 w-full relative">
-                <img 
-                  src={getSchoolThumbnail(school)} 
+                <img
+                  src={getSchoolThumbnail(school) || "/placeholder.svg"}
                   alt={school.name}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "../../../assets/placeholder-image.png";
-                  }}
+                  onError={handleImageError}
                 />
                 {(!school.images || school.images.length === 0) && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -150,9 +145,7 @@ export function SchoolsList() {
                     <Users className="w-4 h-4 mr-2" />
                     {school.dashboard.studentCount} Students
                   </div>
-                  <div className="text-sm text-gray-500">
-                    {school.instructors.length} Instructors
-                  </div>
+                  <div className="text-sm text-gray-500">{school.instructors.length} Instructors</div>
                 </div>
               </CardContent>
             </Card>
@@ -160,11 +153,8 @@ export function SchoolsList() {
         </div>
       )}
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
     </div>
-  );
+  )
 }
+

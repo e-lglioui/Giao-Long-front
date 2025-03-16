@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,13 +9,13 @@ import { Button } from "@/components/ui/button"
 import type { School } from "../types/school.types"
 import { schoolService } from "../services/school.service"
 import { useToast } from "@/components/ui/use-toast"
-import { MapPin, Edit, Trash2, Clock, Calendar, Upload, Image as ImageIcon } from "lucide-react"
+import { MapPin, Edit, Trash2, Clock, Calendar, Upload, ImageIcon } from "lucide-react"
 import { ManageMembersForm } from "../components/ManageMembersForm"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SchoolScheduleForm } from "../components/SchoolScheduleForm"
 import { ClassList } from "../../class/components/ClassList"
 import { ImageGallery } from "../components/ImageGallery"
-import api from "@/services/api"
+import { getImageUrl, handleImageError } from "../utils/image-utils"
 
 export function SchoolDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -69,64 +71,24 @@ export function SchoolDetailPage() {
     }
   }
 
-  // const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const files = event.target.files
-  //   if (!files || files.length === 0) return
-
-  //   setIsUploading(true)
-  //   const formData = new FormData()
-    
-  //   // Append all selected files
-  //   for (let i = 0; i < files.length; i++) {
-  //     formData.append('images', files[i])
-  //   }
-
-  //   try {
-  //     await api.post(`http://localhost:3000/schools/${id}/images`, formData, {
-  //       headers: {
-  //         'Content-Type': 'multipart/form-data'
-  //       }
-  //     })
-      
-  //     toast({
-  //       title: "Success",
-  //       description: `${files.length > 1 ? 'Images' : 'Image'} uploaded successfully`,
-  //     })
-      
-  //     // Reload school data to get updated images
-  //     loadSchool()
-  //   } catch (error: any) {
-  //     toast({
-  //       title: "Error",
-  //       description: error.response?.data?.message || "Failed to upload images",
-  //       variant: "destructive",
-  //     })
-  //   } finally {
-  //     setIsUploading(false)
-  //     // Clear the file input
-  //     if (fileInputRef.current) {
-  //       fileInputRef.current.value = ''
-  //     }
-  //   }
-  // }
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
     if (!files || files.length === 0) return
-  
+
     setIsUploading(true)
-    
+
     try {
       if (files.length === 1) {
         await schoolService.uploadSingleImage(id!, files[0])
       } else {
         await schoolService.uploadMultipleImages(id!, files)
       }
-      
+
       toast({
         title: "Success",
-        description: `${files.length > 1 ? 'Images' : 'Image'} uploaded successfully`,
+        description: `${files.length > 1 ? "Images" : "Image"} uploaded successfully`,
       })
-      
+
       // Reload school data to get updated images
       loadSchool()
     } catch (error: any) {
@@ -138,7 +100,7 @@ export function SchoolDetailPage() {
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+        fileInputRef.current.value = ""
       }
     }
   }
@@ -194,13 +156,11 @@ export function SchoolDetailPage() {
               {/* Featured image (if available) */}
               {school.images && school.images.length > 0 && (
                 <div className="mb-6">
-                  <img 
-                    src={school.images[0]} 
-                    alt={school.name} 
+                  <img
+                    src={getImageUrl(school.images[0]) || "/placeholder.svg"}
+                    alt={school.name}
                     className="w-full h-64 object-cover rounded-md"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "../../../assets/placeholder-image.png";
-                    }}
+                    onError={handleImageError}
                   />
                 </div>
               )}
@@ -224,11 +184,11 @@ export function SchoolDetailPage() {
                 <h3 className="font-semibold mb-2">Operating Hours</h3>
                 <div className="flex items-center text-gray-600">
                   <Clock className="w-4 h-4 mr-2" />
-                  {school.schedule?.openingTime || 'N/A'} - {school.schedule?.closingTime || 'N/A'}
+                  {school.schedule?.openingTime || "N/A"} - {school.schedule?.closingTime || "N/A"}
                 </div>
                 <div className="flex items-center text-gray-600 mt-1">
                   <Calendar className="w-4 h-4 mr-2" />
-                  {school.schedule?.operatingDays?.join(", ") || 'No operating days specified'}
+                  {school.schedule?.operatingDays?.join(", ") || "No operating days specified"}
                 </div>
               </div>
 
@@ -266,24 +226,20 @@ export function SchoolDetailPage() {
                   accept="image/*"
                   multiple
                 />
-                <Button 
-                  variant="outline" 
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                >
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
                   <Upload className="w-4 h-4 mr-2" />
                   {isUploading ? "Uploading..." : "Upload Images"}
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              {(!school.images || school.images.length === 0) ? (
+              {!school.images || school.images.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                   <ImageIcon className="w-16 h-16 mb-4" />
                   <p>No images have been uploaded yet</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4" 
+                  <Button
+                    variant="outline"
+                    className="mt-4"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
                   >
@@ -292,11 +248,7 @@ export function SchoolDetailPage() {
                   </Button>
                 </div>
               ) : (
-                <ImageGallery 
-                  schoolId={school._id} 
-                  images={school.images} 
-                  onImageDeleted={handleImageDeleted}
-                />
+                <ImageGallery schoolId={school._id} images={school.images} onImageDeleted={handleImageDeleted} />
               )}
             </CardContent>
           </Card>
@@ -317,3 +269,4 @@ export function SchoolDetailPage() {
     </div>
   )
 }
+
