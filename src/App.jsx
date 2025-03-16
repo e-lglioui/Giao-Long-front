@@ -20,6 +20,7 @@ import { ManageMembersForm } from "@/features/schools/components/ManageMembersFo
 import { SchoolsList } from "@/features/schools/components/SchoolsList"
 import { CreateSchoolForm } from "@/features/schools/components/CreateSchoolForm"
 import { SchoolDetailPage } from "@/features/schools/pages/SchoolDetailPage"
+import { SchoolMapPage } from "@/features/schools/pages/school-map-page"
 import ProfilePage from "@/features/profile/components/ProfilePage"
 import { StudentsListPage } from "@/features/students/pages/StudentsListPage"
 import { StudentDetailPage } from "@/features/students/pages/StudentDetailPage"
@@ -73,6 +74,7 @@ function App() {
           <Route path="schools">
             <Route index element={<SchoolsList />} />
             <Route path="create" element={<CreateSchoolForm />} />
+            <Route path="map" element={<SchoolMapPage />} />
             <Route path=":id" element={<SchoolDetailPage />} />
             <Route path=":id/edit" element={<CreateSchoolForm />} />
             <Route path=":schoolId/instructors">

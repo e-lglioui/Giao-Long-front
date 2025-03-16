@@ -139,6 +139,24 @@ export const schoolService = {
       throw new ApiError(error.response?.data?.message || "Failed to delete image", error.response?.status)
     }
   },
+  async getSchoolsForMap() {
+    try {
+      const { data } = await api.get<School[]>(`${SCHOOLS_URL}/map`)
+      return data
+    } catch (error: any) {
+      throw new ApiError(error.response?.data?.message || "Failed to fetch schools for map", error.response?.status)
+    }
+  },
 
+  async getNearbySchools(latitude: number, longitude: number, maxDistance = 5000) {
+    try {
+      const { data } = await api.get<School[]>(
+        `${SCHOOLS_URL}/nearby?latitude=${latitude}&longitude=${longitude}&maxDistance=${maxDistance}`,
+      )
+      return data
+    } catch (error: any) {
+      throw new ApiError(error.response?.data?.message || "Failed to fetch nearby schools", error.response?.status)
+    }
+  },
 
 }

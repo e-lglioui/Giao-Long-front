@@ -9,7 +9,7 @@ import { Pagination } from "./Pagination"
 import type { School } from "../types/school.types"
 import { schoolService } from "../services/school.service"
 import { useToast } from "@/components/ui/use-toast"
-import { Plus, Users, MapPin, Image } from "lucide-react"
+import { Plus, Users, MapPin, Image, Map } from "lucide-react"
 import { getImageUrl, handleImageError } from "../utils/image-utils"
 
 const ITEMS_PER_PAGE = 9
@@ -89,7 +89,6 @@ export function SchoolsList() {
   const totalPages = Math.ceil(filteredSchools.length / ITEMS_PER_PAGE)
 
   // Get the first image as thumbnail or return a placeholder
-  // Get the first image as thumbnail or return a placeholder
   const getSchoolThumbnail = (school: School) => {
     if (school.images && school.images.length > 0) {
       return getImageUrl(school.images[0])
@@ -101,10 +100,16 @@ export function SchoolsList() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Kung Fu Schools</h2>
-        <Button onClick={() => navigate("/dashboard/schools/create")}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add New School
-        </Button>
+        <div className="flex gap-4">
+          <Button variant="outline" onClick={() => navigate("/dashboard/schools/map")}>
+            <Map className="w-4 h-4 mr-2" />
+            View Map
+          </Button>
+          <Button onClick={() => navigate("/dashboard/schools/create")}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add New School
+          </Button>
+        </div>
       </div>
 
       <SchoolFilters onFilterChange={handleFilterChange} />

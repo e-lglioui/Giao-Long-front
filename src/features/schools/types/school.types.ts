@@ -28,7 +28,12 @@ export interface School {
     revenue: number
     performanceStats: Record<string, number>
   }
+  location: {
+    latitude: number
+    longitude: number
+  }
 }
+
 
 export interface ScheduleDto {
   openingTime: string

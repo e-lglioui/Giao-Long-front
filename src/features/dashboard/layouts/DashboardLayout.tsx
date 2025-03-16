@@ -1,9 +1,8 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Link, useLocation, Outlet } from "react-router-dom"
+import type React from "react";
+import { useState } from "react";
+import { Link, useLocation, Outlet } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -19,93 +18,43 @@ import {
   FileText,
   Award,
   UserCircle,
-} from "lucide-react"
-import { useAuth } from "@/hooks/useAuth"
-import { Button } from "@/components/ui/button"
-import { Toaster } from "@/components/ui/toaster"
+  Map, // ✅ Ajout de l'import manquant
+} from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/toaster";
 
 // Définition du type User
 interface User {
-  id: string
-  username?: string
+  id: string;
+  username?: string;
 }
 
 const menuItems = [
-  {
-    title: "Dashboard",
-    icon: LayoutDashboard,
-    path: "/dashboard",
-  },
-  {
-    title: "Événements",
-    icon: Calendar,
-    path: "/dashboard/events",
-  },
-  {
-    title: "Écoles",
-    icon: School,
-    path: "/dashboard/schools",
-  },
-  {
-    title: "Élèves",
-    icon: Users,
-    path: "/dashboard/students",
-  },
-  {
-    title: "Cours",
-    icon: Calendar,
-    path: "/dashboard/classes",
-  },
-  {
-    title: "Attendance",
-    icon: CheckCircle,
-    path: "/dashboard/attendance",
-  },
-  {
-    title: "Progress Report",
-    icon: FileText,
-    path: "/dashboard/progress-report",
-  },
-  {
-    title: "Certification",
-    icon: Award,
-    path: "/dashboard/certification",
-  },
-  {
-    title: "Messagerie",
-    icon: MessageCircle,
-    path: "/dashboard/chat",
-  },
-  {
-    title: "Visioconférence",
-    icon: Video,
-    path: "/dashboard/video-call",
-  },
-  {
-    title: "Finances",
-    icon: DollarSign,
-    path: "/dashboard/finance",
-  },
-  {
-    title: "Profil",
-    icon: UserCircle,
-    path: "/dashboard/profile",
-  },
-  {
-    title: "Paramètres",
-    icon: Settings,
-    path: "/dashboard/settings",
-  },
-]
+  { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+  { title: "Événements", icon: Calendar, path: "/dashboard/events" },
+  { title: "Écoles", icon: School, path: "/dashboard/schools" },
+  { title: "Élèves", icon: Users, path: "/dashboard/students" },
+  { title: "Cours", icon: Calendar, path: "/dashboard/classes" },
+  { title: "Attendance", icon: CheckCircle, path: "/dashboard/attendance" },
+  { title: "Progress Report", icon: FileText, path: "/dashboard/progress-report" },
+  { title: "Certification", icon: Award, path: "/dashboard/certification" },
+  { title: "Messagerie", icon: MessageCircle, path: "/dashboard/chat" },
+  { title: "Visioconférence", icon: Video, path: "/dashboard/video-call" },
+  { title: "Finances", icon: DollarSign, path: "/dashboard/finance" },
+  { title: "Profil", icon: UserCircle, path: "/dashboard/profile" },
+  { title: "Paramètres", icon: Settings, path: "/dashboard/settings" },
+  { title: "School Map", icon: Map, path: "/dashboard/schools/map" }, // ✅ Correction ici
+];
 
 interface DashboardLayoutProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-  const { logout, user } = useAuth()
-  const location = useLocation()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { logout, user } = useAuth();
+  const location = useLocation();
 
   return (
     <>
@@ -125,7 +74,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {/* Navigation */}
             <nav className="flex-1 space-y-1 p-4">
               {menuItems.map((item) => {
-                const isActive = location.pathname === item.path
+                const isActive = location.pathname === item.path;
                 return (
                   <Link
                     key={item.path}
@@ -137,7 +86,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <item.icon className="h-5 w-5" />
                     <span>{item.title}</span>
                   </Link>
-                )
+                );
               })}
             </nav>
 
@@ -172,6 +121,5 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
       <Toaster />
     </>
-  )
+  );
 }
-
