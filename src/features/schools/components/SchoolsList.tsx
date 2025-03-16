@@ -7,7 +7,7 @@ import { Pagination } from './Pagination';
 import { School } from '../types/school.types';
 import { schoolService } from '../services/school.service';
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Users, MapPin } from 'lucide-react';
+import { Plus, Users, MapPin, Image } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -92,6 +92,14 @@ export function SchoolsList() {
 
   const totalPages = Math.ceil(filteredSchools.length / ITEMS_PER_PAGE);
 
+  // Get the first image as thumbnail or return a placeholder
+  const getSchoolThumbnail = (school: School) => {
+    if (school.images && school.images.length > 0) {
+      return school.images[0];
+    }
+    return "../../../assets/placeholder-image.png";
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -113,9 +121,24 @@ export function SchoolsList() {
           {paginatedSchools.map((school) => (
             <Card
               key={school._id}
-              className="cursor-pointer hover:shadow-lg transition-shadow"
+              className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
               onClick={() => navigate(`/dashboard/schools/${school._id}`)}
             >
+              <div className="h-40 w-full relative">
+                <img 
+                  src={getSchoolThumbnail(school)} 
+                  alt={school.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "../../../assets/placeholder-image.png";
+                  }}
+                />
+                {(!school.images || school.images.length === 0) && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                    <Image className="w-12 h-12 text-gray-400" />
+                  </div>
+                )}
+              </div>
               <CardContent className="p-6">
                 <h3 className="text-xl font-semibold mb-2">{school.name}</h3>
                 <p className="text-gray-500 flex items-center mb-4">
@@ -144,4 +167,4 @@ export function SchoolsList() {
       />
     </div>
   );
-} 
+}
