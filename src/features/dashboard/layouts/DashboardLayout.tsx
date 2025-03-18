@@ -3,23 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  School,
-  DollarSign,
-  MessageCircle,
-  Video,
-  Settings,
-  LogOut,
-  Menu,
-  CheckCircle,
-  FileText,
-  Award,
-  UserCircle,
-  Map, // ✅ Ajout de l'import manquant
-} from "lucide-react";
+import { LayoutDashboard, Users, Calendar, School, DollarSign, MessageCircle, Video, Settings, LogOut, Menu, CheckCircle, FileText, Award, UserCircle, Map, GraduationCap } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
@@ -35,6 +19,7 @@ const menuItems = [
   { title: "Événements", icon: Calendar, path: "/dashboard/events" },
   { title: "Écoles", icon: School, path: "/dashboard/schools" },
   { title: "Élèves", icon: Users, path: "/dashboard/students" },
+  { title: "Instructeurs", icon: GraduationCap, path: "/dashboard/instructors" }, // Added instructors menu item
   { title: "Cours", icon: Calendar, path: "/dashboard/classes" },
   { title: "Attendance", icon: CheckCircle, path: "/dashboard/attendance" },
   { title: "Progress Report", icon: FileText, path: "/dashboard/progress-report" },
@@ -44,7 +29,7 @@ const menuItems = [
   { title: "Finances", icon: DollarSign, path: "/dashboard/finance" },
   { title: "Profil", icon: UserCircle, path: "/dashboard/profile" },
   { title: "Paramètres", icon: Settings, path: "/dashboard/settings" },
-  { title: "School Map", icon: Map, path: "/dashboard/schools/map" }, // ✅ Correction ici
+  { title: "School Map", icon: Map, path: "/dashboard/schools/map" },
 ];
 
 interface DashboardLayoutProps {
