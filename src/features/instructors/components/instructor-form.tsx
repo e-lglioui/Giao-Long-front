@@ -279,7 +279,7 @@ export function InstructorForm({ isEdit = false, schoolId }: InstructorFormProps
             <div className="space-y-2">
               <Label>Spécialités</Label>
               <div className="flex flex-wrap gap-2 mb-2">
-                {formData.specialties.map((specialty, index) => (
+                {formData.specialties.map((specialty: string, index: number) => (
                   <Badge key={index} variant="secondary" className="gap-1">
                     {specialty}
                     <Button
@@ -324,7 +324,7 @@ export function InstructorForm({ isEdit = false, schoolId }: InstructorFormProps
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
-              {formData.certifications.map((cert, index) => (
+              {formData.certifications.map((cert: Certification, index: number) => (
                 <div key={index} className="flex items-start justify-between p-3 border rounded-md">
                   <div>
                     <p className="font-medium">{cert.name}</p>

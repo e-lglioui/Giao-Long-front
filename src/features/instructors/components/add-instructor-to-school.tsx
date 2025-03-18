@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { fetchInstructors, assignInstructorToSchool } from '../instructorSlice';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InstructorForm } from './instructor-form';
+import { Instructor } from '../services/instructor.service';
 
 export function AddInstructorToSchool() {
   const { schoolId } = useParams<{ schoolId: string }>();
@@ -58,11 +59,11 @@ export function AddInstructorToSchool() {
   };
 
   const filteredInstructors = instructors.filter(
-    (instructor) =>
+    (instructor: Instructor) =>
       instructor.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       instructor.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       instructor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.specialties.some((specialty) =>
+      instructor.specialties.some((specialty: string) =>
         specialty.toLowerCase().includes(searchTerm.toLowerCase())
       )
   );
@@ -127,7 +128,7 @@ export function AddInstructorToSchool() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredInstructors.map((instructor) => (
+                      filteredInstructors.map((instructor: Instructor) => (
                         <TableRow key={instructor.id}>
                           <TableCell>
                             {instructor.firstName} {instructor.lastName}
@@ -135,7 +136,7 @@ export function AddInstructorToSchool() {
                           <TableCell>{instructor.email}</TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {instructor.specialties.map((specialty, index) => (
+                              {instructor.specialties.map((specialty: string, index: number) => (
                                 <Badge key={index} variant="outline">
                                   {specialty}
                                 </Badge>
