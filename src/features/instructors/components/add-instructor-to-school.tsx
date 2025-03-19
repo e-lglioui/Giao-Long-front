@@ -1,81 +1,87 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '@/hooks/redux';
-import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { fetchInstructors, assignInstructorToSchool } from '../instructorSlice';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { InstructorForm } from './instructor-form';
-import { Instructor } from '../services/instructor.service';
+"use client"
+
+import { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { useAppDispatch, useAppSelector } from "@/hooks/redux"
+import { useToast } from "@/hooks/use-toast"
+import { ArrowLeft, Plus, Search } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { fetchInstructors, assignInstructorToSchool } from "../instructorSlice"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { InstructorForm } from "./instructor-form"
+import type { Instructor } from "../services/instructor.service"
 
 export function AddInstructorToSchool() {
-  const { schoolId } = useParams<{ schoolId: string }>();
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { instructors, loading, error } = useAppSelector((state) => state.instructors);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('existing');
+  const { schoolId } = useParams<{ schoolId: string }>()
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const { toast } = useToast()
+
+  // Add a fallback for the instructors state
+  const instructorsState = useAppSelector((state) => state.instructors) || {
+    instructors: [],
+    loading: false,
+    error: null,
+  }
+
+  const { instructors, loading, error } = instructorsState
+
+  const [searchTerm, setSearchTerm] = useState("")
+  const [activeTab, setActiveTab] = useState("existing")
 
   useEffect(() => {
-    dispatch(fetchInstructors());
-  }, [dispatch]);
+    dispatch(fetchInstructors())
+  }, [dispatch])
 
   useEffect(() => {
     if (error) {
       toast({
-        title: 'Erreur',
+        title: "Erreur",
         description: error,
-        variant: 'destructive',
-      });
+        variant: "destructive",
+      })
     }
-  }, [error, toast]);
+  }, [error, toast])
 
   const handleAssignInstructor = async (instructorId: string) => {
     if (schoolId) {
       try {
-        await dispatch(assignInstructorToSchool({ schoolId, instructorId })).unwrap();
+        await dispatch(assignInstructorToSchool({ schoolId, instructorId })).unwrap()
         toast({
-          title: 'Succès',
-          description: 'Instructeur ajouté à l\'école avec succès',
-        });
-        navigate(`/dashboard/schools/${schoolId}`);
+          title: "Succès",
+          description: "Instructeur ajouté à l'école avec succès",
+        })
+        navigate(`/dashboard/schools/${schoolId}`)
       } catch (err) {
-        console.error('Error assigning instructor:', err);
+        console.error("Error assigning instructor:", err)
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de l'ajout de l'instructeur",
+          variant: "destructive",
+        })
       }
     }
-  };
+  }
 
+  // Filter instructors safely by checking if properties exist before accessing them
   const filteredInstructors = instructors.filter(
     (instructor: Instructor) =>
-      instructor.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.specialties.some((specialty: string) =>
-        specialty.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-  );
+      (instructor.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (instructor.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (instructor.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (instructor.specialties?.some((specialty: string) => 
+        specialty?.toLowerCase().includes(searchTerm.toLowerCase())
+      ) || false)
+  )
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => navigate(`/dashboard/schools/${schoolId}`)}
-        >
+        <Button variant="outline" size="icon" onClick={() => navigate(`/dashboard/schools/${schoolId}`)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold">Ajouter un instructeur</h1>
@@ -90,9 +96,7 @@ export function AddInstructorToSchool() {
           <Card>
             <CardHeader>
               <CardTitle>Sélectionner un instructeur existant</CardTitle>
-              <CardDescription>
-                Choisissez un instructeur dans la liste pour l'ajouter à l'école
-              </CardDescription>
+              <CardDescription>Choisissez un instructeur dans la liste pour l'ajouter à l'école</CardDescription>
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -136,19 +140,16 @@ export function AddInstructorToSchool() {
                           <TableCell>{instructor.email}</TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {instructor.specialties.map((specialty: string, index: number) => (
+                              {instructor.specialties?.map((specialty: string, index: number) => (
                                 <Badge key={index} variant="outline">
                                   {specialty}
                                 </Badge>
-                              ))}
+                              )) || null}
                             </div>
                           </TableCell>
                           <TableCell>{instructor.yearsOfExperience} ans</TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              onClick={() => handleAssignInstructor(instructor.id!)}
-                              size="sm"
-                            >
+                            <Button onClick={() => handleAssignInstructor(instructor.id!)} size="sm">
                               <Plus className="h-4 w-4 mr-2" />
                               Ajouter
                             </Button>
@@ -167,5 +168,6 @@ export function AddInstructorToSchool() {
         </TabsContent>
       </Tabs>
     </div>
-  );
+  )
 }
+

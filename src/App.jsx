@@ -30,6 +30,13 @@ import { CourseListPage } from "@/features/courses/pages/CourseListPage"
 import { CreateCoursePage } from "@/features/courses/pages/CreateCoursePage"
 import { CourseDetailPage } from "@/features/courses/pages/CourseDetailPage"
 import { UpdateCoursePage } from "@/features/courses/pages/UpdateCoursePage"
+// Instructor imports
+import { InstructorsListPage } from "@/features/instructors/pages/instructors-list-page"
+import { InstructorDetailPage } from "@/features/instructors/pages/instructor-detail-page"
+import { CreateInstructorPage } from "@/features/instructors/pages/create-instructor-page"
+import { EditInstructorPage } from "@/features/instructors/pages/edit-instructor-page"
+import { InstructorFullProfilePage } from "@/features/instructors/pages/instructor-full-profile-page"
+import { AddInstructorToSchool } from "@/features/instructors/components/add-instructor-to-school"
 
 function App() {
   return (
@@ -78,7 +85,7 @@ function App() {
             <Route path=":id" element={<SchoolDetailPage />} />
             <Route path=":id/edit" element={<CreateSchoolForm />} />
             <Route path=":schoolId/instructors">
-              <Route path="add" element={<ManageMembersForm />} />
+              <Route path="add" element={<AddInstructorToSchool />} />
               <Route path=":instructorId/edit" element={<ManageMembersForm />} />
             </Route>
             <Route path=":schoolId/students">
@@ -92,6 +99,15 @@ function App() {
             <Route index element={<StudentsListPage />} />
             <Route path=":id" element={<StudentDetailPage />} />
             <Route path="create" element={<CreateStudentPage />} />
+          </Route>
+
+          {/* Instructor Routes */}
+          <Route path="instructors">
+            <Route index element={<InstructorsListPage />} />
+            <Route path=":id" element={<InstructorDetailPage />} />
+            <Route path=":id/full-profile" element={<InstructorFullProfilePage />} />
+            <Route path="create" element={<CreateInstructorPage />} />
+            <Route path=":id/edit" element={<EditInstructorPage />} />
           </Route>
 
           {/* Course Routes */}
@@ -114,4 +130,3 @@ function App() {
 }
 
 export default App
-

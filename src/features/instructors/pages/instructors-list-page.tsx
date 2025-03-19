@@ -1,19 +1,14 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Search, UserPlus } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/hooks/redux';
-import { fetchInstructors, deleteInstructor } from '../instructorSlice';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+"use client"
+
+import { useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { Plus, Edit, Trash2, Search, UserPlus, User } from "lucide-react"
+import { useAppDispatch, useAppSelector } from "@/hooks/redux"
+import { fetchInstructors, deleteInstructor } from "../instructorSlice"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
@@ -21,66 +16,84 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { Instructor } from '../services/instructor.service';
+} from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
+import type { Instructor } from "../services/instructor.service"
 
 export function InstructorsListPage() {
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { instructors, loading, error } = useAppSelector((state) => state.instructors);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [instructorToDelete, setInstructorToDelete] = useState<string | null>(null);
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const { toast } = useToast()
+
+  // Add a fallback for the instructors state
+  const instructorsState = useAppSelector((state) => state.instructors) || {
+    instructors: [],
+    loading: false,
+    error: null,
+  }
+
+  const { instructors, loading, error } = instructorsState
+
+  const [searchTerm, setSearchTerm] = useState("")
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [instructorToDelete, setInstructorToDelete] = useState<string | null>(null)
 
   useEffect(() => {
-    dispatch(fetchInstructors());
-  }, [dispatch]);
+    dispatch(fetchInstructors())
+  }, [dispatch])
 
   useEffect(() => {
     if (error) {
       toast({
-        title: 'Erreur',
+        title: "Erreur",
         description: error,
-        variant: 'destructive',
-      });
+        variant: "destructive",
+      })
     }
-  }, [error, toast]);
+  }, [error, toast])
 
   const handleDeleteClick = (id: string) => {
-    setInstructorToDelete(id);
-    setDeleteDialogOpen(true);
-  };
+    setInstructorToDelete(id)
+    setDeleteDialogOpen(true)
+  }
 
   const confirmDelete = async () => {
     if (instructorToDelete) {
-      await dispatch(deleteInstructor(instructorToDelete));
-      setDeleteDialogOpen(false);
-      setInstructorToDelete(null);
-      toast({
-        title: 'Succès',
-        description: 'Instructeur supprimé avec succès',
-      });
+      try {
+        await dispatch(deleteInstructor(instructorToDelete)).unwrap()
+        setDeleteDialogOpen(false)
+        setInstructorToDelete(null)
+        toast({
+          title: "Succès",
+          description: "Instructeur supprimé avec succès",
+        })
+      } catch (err) {
+        console.error("Error deleting instructor:", err)
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la suppression",
+          variant: "destructive",
+        })
+      }
     }
-  };
+  }
 
   const filteredInstructors = instructors.filter(
     (instructor: Instructor) =>
-      instructor.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.specialties.some((specialty: string) =>
-        specialty.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-  );
+      (instructor.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (instructor.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (instructor.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      (instructor.specialties?.some((specialty: string) => 
+        specialty?.toLowerCase().includes(searchTerm.toLowerCase())
+      ) || false)
+  )
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Instructeurs</h1>
-        <Button onClick={() => navigate('/dashboard/instructors/create')}>
+        <Button onClick={() => navigate("/dashboard/instructors/create")}>
           <Plus className="mr-2 h-4 w-4" />
           Nouvel Instructeur
         </Button>
@@ -130,10 +143,7 @@ export function InstructorsListPage() {
                   filteredInstructors.map((instructor: Instructor) => (
                     <TableRow key={instructor.id}>
                       <TableCell>
-                        <Link
-                          to={`/dashboard/instructors/${instructor.id}`}
-                          className="font-medium hover:underline"
-                        >
+                        <Link to={`/dashboard/instructors/${instructor.id}`} className="font-medium hover:underline">
                           {instructor.firstName} {instructor.lastName}
                         </Link>
                       </TableCell>
@@ -141,11 +151,11 @@ export function InstructorsListPage() {
                       <TableCell>{instructor.phone}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
-                          {instructor.specialties.map((specialty: string, index: number) => (
+                          {instructor.specialties?.map((specialty: string, index: number) => (
                             <Badge key={index} variant="outline">
                               {specialty}
                             </Badge>
-                          ))}
+                          )) || null}
                         </div>
                       </TableCell>
                       <TableCell>{instructor.yearsOfExperience} ans</TableCell>
@@ -154,15 +164,19 @@ export function InstructorsListPage() {
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => navigate(`/dashboard/instructors/${instructor.id}/edit`)}
+                            onClick={() => navigate(`/dashboard/instructors/${instructor.id}/full-profile`)}
+                            title="Voir le profil complet"
                           >
-                            <Edit className="h-4 w-4" />
+                            <User className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => handleDeleteClick(instructor.id!)}
+                            onClick={() => navigate(`/dashboard/instructors/${instructor.id}/edit`)}
                           >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={() => handleDeleteClick(instructor.id!)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                           <Button
@@ -202,5 +216,6 @@ export function InstructorsListPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }
+

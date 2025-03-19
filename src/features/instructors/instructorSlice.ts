@@ -187,10 +187,23 @@ const instructorSlice = createSlice({
       })
       .addCase(addInstructorToSchool.fulfilled, (state, action) => {
         state.loading = false;
-        state.instructors.push(action.payload);
-        state.currentInstructor = action.payload;
+        const instructor = action.payload;
+        state.instructors.push(instructor);
+        state.currentInstructor = instructor;
       })
       .addCase(addInstructorToSchool.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Assign instructor to school
+      .addCase(assignInstructorToSchool.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(assignInstructorToSchool.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(assignInstructorToSchool.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
