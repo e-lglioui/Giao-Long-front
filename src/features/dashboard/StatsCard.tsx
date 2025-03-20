@@ -1,10 +1,10 @@
-import { Card, Metric, Text, Flex, ProgressBar } from "@tremor/react";
+import { Card, Metric, Text, Flex, ProgressBar } from "@tremor/react"
 
 interface StatsCardProps {
-  title: string;
-  metric: string;
-  progress: number;
-  target: string;
+  title: string
+  metric: string
+  progress: number
+  target: string
 }
 
 export function StatsCard({ title, metric, progress, target }: StatsCardProps) {
@@ -18,5 +18,6 @@ export function StatsCard({ title, metric, progress, target }: StatsCardProps) {
       </Flex>
       <ProgressBar value={progress} className="mt-2" />
     </Card>
-  );
-} 
+  )
+}
+

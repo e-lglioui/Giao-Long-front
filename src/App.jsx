@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { PrivateRoute } from "./components/PrivateRoute"
-import { DashboardLayout } from "@/features/dashboard/layouts/DashboardLayout"
+import DashboardLayout from "@/features/dashboard/DashboardLayout"
 import { LoginForm } from "@/features/auth/components/LoginForm"
 import { RegisterForm } from "@/features/auth/components/RegisterForm"
 import { EventsListPage } from "@/features/events/pages/EventsListPage"
