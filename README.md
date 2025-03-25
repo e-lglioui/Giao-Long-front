@@ -43,6 +43,7 @@ Master's Portal est une application web et mobile conçue pour gérer les école
     ```env
     REACT_APP_API_URL=http://localhost:3000/
     REACT_APP_STRIPE_PUBLIC_KEY=your_stripe_public_key
+    MAPS_API_KEY=your_google_maps_api_key
     ```
 4. **Lancer l'application** :
     ```bash
