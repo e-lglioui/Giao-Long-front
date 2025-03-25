@@ -19,7 +19,10 @@ import { ConfirmEmail } from "@/features/auth/components/ConfirmEmail"
 import { ManageMembersForm } from "@/features/schools/components/ManageMembersForm"
 import { SchoolsList } from "@/features/schools/components/SchoolsList"
 import { CreateSchoolForm } from "@/features/schools/components/CreateSchoolForm"
+import { SchoolAdminCreateForm } from "@/features/schools/components/SchoolAdminCreateForm"
+import { SchoolAdminEditForm } from "@/features/schools/components/SchoolAdminEditForm"
 import { SchoolDetailPage } from "@/features/schools/pages/SchoolDetailPage"
+import { SchoolAdminMySchoolPage } from "@/features/schools/pages/SchoolAdminMySchoolPage"
 import { SchoolMapPage } from "@/features/schools/pages/school-map-page"
 import ProfilePage from "@/features/profile/components/ProfilePage"
 import { StudentsListPage } from "@/features/students/pages/StudentsListPage"
@@ -36,16 +39,22 @@ import { InstructorDetailPage } from "@/features/instructors/pages/instructor-de
 import { CreateInstructorPage } from "@/features/instructors/pages/create-instructor-page"
 import { EditInstructorPage } from "@/features/instructors/pages/edit-instructor-page"
 import { InstructorFullProfilePage } from "@/features/instructors/pages/instructor-full-profile-page"
-import { AddInstructorToSchool } from "@/features/instructors/components/add-instructor-to-school"
-
+import { SchoolAdminImageUpload } from "@/features/schools/components/SchoolAdminImageUpload"
+// New pages
+import StaffManagement from "@/features/schools/pages/staff-management "
+import EventsManagement from "@/features/schools/pages/events-management"
+import PaymentManagement from "@/features/schools/pages/payment-management"
+import {Homepage} from "@/pages/Homepage"
+import SchoolDetail from"@/pages/SchoolDetail"
 function App() {
   return (
     <Router>
       <Routes>
         {/* Auth Routes */}
+        <Route path="/" element={<Homepage/>} />
+        <Route path="/detail/:id" element={<SchoolDetail />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<RegisterForm />} />
-
         {/* Auth Flow Routes */}
         <Route path="/auth">
           <Route path="check-email" element={<CheckEmail />} />
@@ -84,8 +93,11 @@ function App() {
             <Route path="map" element={<SchoolMapPage />} />
             <Route path=":id" element={<SchoolDetailPage />} />
             <Route path=":id/edit" element={<CreateSchoolForm />} />
+            <Route path="my-school" element={<SchoolAdminMySchoolPage />} />
+            <Route path="my-school/edit" element={<SchoolAdminEditForm />} />
+            <Route path="my-school/create" element={<SchoolAdminCreateForm />} />
+            <Route path="my-school/images/upload-multiple" element={<SchoolAdminImageUpload />} />
             <Route path=":schoolId/instructors">
-              <Route path="add" element={<AddInstructorToSchool />} />
               <Route path=":instructorId/edit" element={<ManageMembersForm />} />
             </Route>
             <Route path=":schoolId/students">
@@ -117,10 +129,12 @@ function App() {
             <Route path=":id" element={<CourseDetailPage />} />
             <Route path=":id/edit" element={<UpdateCoursePage />} />
           </Route>
-        </Route>
 
-        {/* Root Redirect */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* New Routes */}
+          <Route path="staff" element={<StaffManagement />} />
+          <Route path="events-management" element={<EventsManagement />} />
+          <Route path="payments" element={<PaymentManagement />} />
+        </Route>
 
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -130,3 +144,4 @@ function App() {
 }
 
 export default App
+

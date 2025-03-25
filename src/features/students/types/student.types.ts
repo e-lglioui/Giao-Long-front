@@ -1,19 +1,16 @@
-
-
 export interface CreateStudentDto {
-    firstName: string;
-    lastName: string;
-    studentId: string;
-    dateOfBirth: string;
-    class: string;
-    isActive: boolean;
-    courses?: string[];
-  }
-  
-  export interface Student extends CreateStudentDto {
-    id: string;
-    grades?: {
-      course: string;
-      grade: number;
-    }[];
-  }
+  name: string;
+  age: number;
+  class: string;
+  school?: string; // Assuming school is optional during creation, but can be set later
+}
+
+export interface Student {
+  id: string;
+  name: string;
+  age: number;
+  class: string;
+  grades: { [course: string]: number };
+  school: string;
+}
+

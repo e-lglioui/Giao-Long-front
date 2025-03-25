@@ -30,7 +30,7 @@ import {
   User,
   BarChart,
   FileText,
-  MessageSquare,
+
   Bell,
 } from "lucide-react"
 
@@ -114,6 +114,15 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({ children }) => {
               {isSchoolAdmin && (
                 <>
                   <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.pathname.includes("/dashboard/schools/my-school")}>
+                      <Link to="/dashboard/schools/my-school">
+                        <School className="h-5 w-5" />
+                        <span>My School</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={location.pathname.includes("/dashboard/staff")}>
                       <Link to="/dashboard/staff">
                         <Users className="h-5 w-5" />
@@ -136,6 +145,33 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({ children }) => {
                       <Link to="/dashboard/students">
                         <Users className="h-5 w-5" />
                         <span>Students</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.pathname.includes("/dashboard/staff")}>
+                      <Link to="/dashboard/staff">
+                        <Users className="h-5 w-5" />
+                        <span>Staff Management</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.pathname.includes("/dashboard/events")}>
+                      <Link to="/dashboard/events">
+                        <Calendar className="h-5 w-5" />
+                        <span>Events</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.pathname.includes("/dashboard/payments")}>
+                      <Link to="/dashboard/payments">
+                        <CreditCard className="h-5 w-5" />
+                        <span>Payments</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -207,14 +243,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({ children }) => {
               )}
 
               {/* Common Links for All Users */}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname.includes("/dashboard/messages")}>
-                  <Link to="/dashboard/messages">
-                    <MessageSquare className="h-5 w-5" />
-                    <span>Messages</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+        
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname.includes("/dashboard/notifications")}>

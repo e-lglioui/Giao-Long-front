@@ -81,12 +81,16 @@ export function InstructorsListPage() {
 
   const filteredInstructors = instructors.filter(
     (instructor: Instructor) =>
-      (instructor.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      (instructor.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      (instructor.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      (instructor.specialties?.some((specialty: string) => 
-        specialty?.toLowerCase().includes(searchTerm.toLowerCase())
-      ) || false)
+      instructor.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false ||
+      instructor.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false ||
+      instructor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false ||
+      instructor.specialties?.some((specialty: string) =>
+        specialty?.toLowerCase().includes(searchTerm.toLowerCase()),
+      ) ||
+      false,
   )
 
   return (

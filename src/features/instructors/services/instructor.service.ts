@@ -1,65 +1,13 @@
-import type React from "react"
 import api from "@/services/api"
-
-export const API_BASE_URL = "http://localhost:3000"
-
-// Modifions la fonction getImageUrl pour mieux gérer les chemins de fichiers
-export function getImageUrl(imagePath: string | undefined): string | undefined {
-  if (!imagePath) return undefined
-
-  // Skip paths with 'undefined' in them
-  if (imagePath.includes("undefined")) {
-    console.warn(`Skipping invalid path with 'undefined': ${imagePath}`)
-    return undefined
-  }
-
-  // If it's already a full URL, return it as is
-  if (imagePath.startsWith("http")) return imagePath
-
-  // Extract the filename from the path
-  const filename = imagePath.split("/").pop()
-
-  // Handle paths based on filename patterns
-  if (filename) {
-    // Image files
-    if (filename.startsWith("image-")) {
-      return `${API_BASE_URL}/upload/images/${filename}`
-    }
-
-    // Document files (certificates, passports)
-    if (filename.startsWith("certificate-") || filename.startsWith("passport-") || filename.startsWith("document-")) {
-      return `${API_BASE_URL}/upload/documents/${filename}`
-    }
-  }
-
-  // Handle paths that start with /images/ or /documents/
-  if (imagePath.startsWith("/images/")) {
-    return `${API_BASE_URL}/upload/images/${imagePath.split("/").pop()}`
-  }
-
-  if (imagePath.startsWith("/documents/")) {
-    return `${API_BASE_URL}/upload/documents/${imagePath.split("/").pop()}`
-  }
-
-  // Default case: append to base URL
-  return `${API_BASE_URL}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`
-}
-
-/**
- * Handles image loading errors by setting a placeholder
- * @param e - The error event
- */
-export function handleImageError(e: React.SyntheticEvent<HTMLImageElement, Event>): void {
-  ;(e.target as HTMLImageElement).src = "/placeholder.svg?height=192&width=384"
-}
+import { getImageUrl, adaptInstructor, openDocument } from "../utils/instructor-utils"
 
 export interface Certification {
   name: string
   issuingOrganization: string
   issueDate: string
   expiryDate?: string
-  documentUrl?: string // URL to the certificate PDF document
-  certificateFile?: string // Alternative field name for document URL
+  documentUrl?: string
+  certificateFile?: string
 }
 
 export interface Instructor {
@@ -76,7 +24,9 @@ export interface Instructor {
   profileImageUrl?: string // URL to the profile image
   profileImages?: string[] // Array of all profile images
   passportUrl?: string // URL to the sport passport document
-  sportsPassport?: string // Alternative field name for passport URL
+  sportsPassport?: string
+  username: string // Ajout du champ username
+  password?: string // Ajout du champ password (optionnel pour les mises à jour)
 }
 
 export interface InstructorUpdateDto {
@@ -91,184 +41,188 @@ export interface InstructorUpdateDto {
   certifications?: Certification[]
 }
 
-// Adapter function to transform backend response to frontend format
-const adaptInstructor = (data: any): Instructor => {
-  console.log("Raw instructor data from API:", data)
-
-  // Extract a valid profile image URL from profileImages array if available
-  let profileImageUrl = data.profileImageUrl
-  let profileImages: string[] = []
-
-  // Process profile images array
-  if (data.profileImages && data.profileImages.length > 0) {
-    const validImages = data.profileImages.filter(
-      (img: string) => img && typeof img === "string" && !img.includes("undefined"),
-    )
-
-    if (validImages.length > 0) {
-      // Use the most recent one (assume it's the last in the array)
-      profileImageUrl = validImages[validImages.length - 1]
-
-      // Store all valid profile images with resolved URLs
-      profileImages = validImages.map((img: string) => getImageUrl(img)).filter(Boolean) as string[]
-    }
-  } else if (profileImageUrl) {
-    // If we have a single profile image but no array, create an array with just that image
-    const resolved = getImageUrl(profileImageUrl)
-    if (resolved) {
-      profileImages = [resolved]
-    }
+export interface SchoolInstructorFullProfile {
+  basicInfo: {
+    id: string
+    name: string
+    email: string
+    username: string
   }
-
-  // Résoudre l'URL de l'image de profil
-  const resolvedProfileImageUrl = getImageUrl(profileImageUrl)
-
-  // Handle the case where instructor data comes with a nested userId
-  if (data.userId) {
-    return {
-      id: data._id,
-      firstName: data.userId.firstName || "",
-      lastName: data.userId.lastName || "",
-      email: data.userId.email || "",
-      phone: data.phone || "",
-      address: data.address || "",
-      bio: data.bio || "",
-      specialties: data.specialties || [],
-      yearsOfExperience: data.yearsOfExperience || 0,
-      certifications: (data.certifications || []).map((cert: any) => ({
-        ...cert,
-        documentUrl: getImageUrl(cert.documentUrl || cert.certificateFile),
-      })),
-      profileImageUrl: resolvedProfileImageUrl,
-      profileImages: profileImages,
-      passportUrl: getImageUrl(data.sportsPassport || data.passportUrl),
-    }
+  schoolInfo: {
+    school: string
+    rank?: string
+    specialties?: string[]
+    biography?: string
+    joinedAt?: Date
   }
-
-  // Handle the case for standard format
-  return {
-    id: data._id || data.id,
-    firstName: data.firstName || "",
-    lastName: data.lastName || "",
-    email: data.email || "",
-    phone: data.phone || "",
-    address: data.address || "",
-    bio: data.bio || "",
-    specialties: data.specialties || [],
-    yearsOfExperience: data.yearsOfExperience || 0,
-    certifications: (data.certifications || []).map((cert: any) => ({
-      ...cert,
-      documentUrl: getImageUrl(cert.documentUrl || cert.certificateFile),
-    })),
-    profileImageUrl: resolvedProfileImageUrl,
-    profileImages: profileImages,
-    passportUrl: getImageUrl(data.sportsPassport || data.passportUrl),
-  }
-}
-
-// Helper function to safely open documents
-const openDocument = async (url: string | undefined, errorToast: (message: string) => void): Promise<void> => {
-  if (!url) {
-    errorToast("L'URL du document est invalide")
-    console.error("Document URL is undefined or null")
-    return
-  }
-
-  console.log(`Attempting to open document: ${url}`)
-
-  try {
-    // First check if the document is accessible
-    const response = await fetch(url, { method: "HEAD" })
-    if (!response.ok) {
-      errorToast(`Le document est inaccessible (${response.status})`)
-      console.error(`Document not accessible (${response.status}): ${url}`)
-
-      // Essayer une URL alternative si l'URL originale ne fonctionne pas
-      const alternativeUrl = url.replace("/upload/documents/", "/documents/")
-      console.log(`Trying alternative URL: ${alternativeUrl}`)
-
-      const altResponse = await fetch(alternativeUrl, { method: "HEAD" })
-      if (altResponse.ok) {
-        console.log(`Alternative URL works, opening: ${alternativeUrl}`)
-        window.open(alternativeUrl, "_blank")
-        return
-      } else {
-        console.error(`Alternative URL also failed (${altResponse.status}): ${alternativeUrl}`)
-      }
-
-      return
-    }
-
-    // Open the document in a new tab
-    console.log(`Document accessible, opening: ${url}`)
-    window.open(url, "_blank")
-  } catch (error) {
-    errorToast("Erreur lors de l'accès au document")
-    console.error("Error accessing document:", error)
-
-    // Essayer une URL alternative en cas d'erreur
-    try {
-      const alternativeUrl = url.replace("/upload/documents/", "/documents/")
-      console.log(`Error occurred, trying alternative URL: ${alternativeUrl}`)
-      window.open(alternativeUrl, "_blank")
-    } catch (altError) {
-      console.error("Error with alternative URL as well:", altError)
-    }
-  }
+  profileInfo: {
+    bio?: string
+    phone?: string
+    address?: string
+    yearsOfExperience?: number
+    certifications?: Certification[]
+    profileImages?: string[]
+    sportsPassport?: string
+  } | null
 }
 
 class InstructorService {
-  private baseUrl = "/instructors"
+  private baseUrl: string
 
-  async getAllInstructors(): Promise<Instructor[]> {
-    const response = await api.get(this.baseUrl)
-    return Array.isArray(response.data) ? response.data.map(adaptInstructor) : []
+  constructor(baseUrl = "/instructors") {
+    this.baseUrl = baseUrl
   }
 
+  /**
+   * Change the base URL for API requests
+   * @param newBaseUrl The new base URL to use
+   */
+  setBaseUrl(newBaseUrl: string): void {
+    this.baseUrl = newBaseUrl
+  }
+
+  /**
+   * Get the appropriate URL based on context
+   * @param schoolId Optional school ID for school-specific endpoints
+   * @returns The appropriate URL
+   */
+  private getContextUrl(schoolId?: string): string {
+    if (schoolId) {
+      return `/schools/${schoolId}/instructors`
+    }
+    return `/${this.baseUrl}`
+  }
+
+  async getAllInstructors(): Promise<Instructor[]> {
+    try {
+      const response = await api.get(`/${this.baseUrl}`)
+      return Array.isArray(response.data) ? response.data.map(adaptInstructor) : []
+    } catch (error) {
+      console.error("Failed to fetch all instructors:", error)
+      return []
+    }
+  }
+
+  /**
+   * Get instructor by ID
+   */
   async getInstructorById(id: string): Promise<Instructor> {
-    const response = await api.get(`${this.baseUrl}/${id}`)
-    return adaptInstructor(response.data)
+    try {
+      const response = await api.get(`/${this.baseUrl}/${id}`)
+      return adaptInstructor(response.data)
+    } catch (error) {
+      console.error(`Failed to fetch instructor with ID ${id}:`, error)
+      throw error
+    }
   }
 
   async getInstructorFullProfile(id: string): Promise<Instructor> {
-    const response = await api.get(`${this.baseUrl}/${id}/full-profile`)
-    return adaptInstructor(response.data)
-  }
-
-  async createInstructor(instructor: Omit<Instructor, "id">): Promise<Instructor> {
-    const response = await api.post(this.baseUrl, instructor)
-    return adaptInstructor(response.data)
-  }
-
-  async updateInstructor(id: string, updateData: InstructorUpdateDto): Promise<Instructor> {
-    const response = await api.patch(`${this.baseUrl}/${id}`, updateData)
-    return adaptInstructor(response.data)
-  }
-
-  async deleteInstructor(id: string): Promise<void> {
-    await api.delete(`${this.baseUrl}/${id}`)
-  }
-
-  async addInstructorToSchool(schoolId: string, instructor: Omit<Instructor, "id">): Promise<Instructor> {
-    const response = await api.post(`/schools/${schoolId}/instructors`, instructor)
-    return adaptInstructor(response.data)
-  }
-
-  async assignInstructorToSchool(schoolId: string, instructorId: string): Promise<void> {
-    await api.put(`/schools/${schoolId}/instructors/${instructorId}`)
-  }
-
-  async uploadProfileImage(id: string, imageFile: File): Promise<Instructor> {
-    // Create FormData with the correct field name
-    const formData = new FormData()
-
-    // IMPORTANT: Use 'image' as the field name to match the backend controller
-    formData.append("image", imageFile)
-
-    console.log("Uploading profile image:", imageFile.name, imageFile.type, imageFile.size)
-
     try {
-      const response = await api.post(`${this.baseUrl}/${id}/profile-image`, formData, {
+      const response = await api.get(`/${this.baseUrl}/${id}/full-profile`)
+      return adaptInstructor(response.data)
+    } catch (error) {
+      console.error(`Failed to fetch full profile for instructor with ID ${id}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Create a new instructor
+   * @param instructor The instructor data
+   * @param schoolId Optional school ID. If provided, the instructor will be created for this school
+   */
+  async createInstructor(instructor: any, schoolId?: string): Promise<Instructor> {
+    try {
+      const url = this.getContextUrl(schoolId)
+      console.log(`Creating instructor with URL: ${url}`)
+
+      // Créer une copie des données pour éviter de modifier l'original
+      const instructorData = { ...instructor }
+
+      // Vérifier si les champs requis sont présents
+      const requiredFields = ["firstName", "lastName", "email", "username", "password"]
+      const missingFields = requiredFields.filter((field) => !instructorData[field])
+
+      if (missingFields.length > 0) {
+        console.error(`Missing required fields: ${missingFields.join(", ")}`)
+        throw new Error(`Missing required fields: ${missingFields.join(", ")}`)
+      }
+
+      // Vérifier la longueur du mot de passe
+      if (instructorData.password && instructorData.password.length < 6) {
+        throw new Error("Password must be at least 6 characters long")
+      }
+
+      console.log(
+        "Instructor data being sent:",
+        JSON.stringify(
+          {
+            ...instructorData,
+            password: instructorData.password ? "******" : undefined, // Masquer le mot de passe dans les logs
+          },
+          null,
+          2,
+        ),
+      )
+
+      const response = await api.post(url, instructorData)
+      console.log("Create instructor response:", response.data)
+      return adaptInstructor(response.data)
+    } catch (error: any) {
+      console.error("Failed to create instructor:", error)
+
+      // Afficher plus de détails sur l'erreur
+      if (error.response) {
+        console.error("Error response data:", error.response.data)
+        console.error("Error response status:", error.response.status)
+        console.error("Error response headers:", error.response.headers)
+
+        // Si le serveur renvoie un message d'erreur spécifique, le propager
+        if (error.response.data && error.response.data.message) {
+          throw new Error(`Server error: ${error.response.data.message}`)
+        }
+      }
+
+      throw error
+    }
+  }
+
+  /**
+   * Update an instructor
+   */
+  async updateInstructor(id: string, updateData: InstructorUpdateDto): Promise<Instructor> {
+    try {
+      const response = await api.patch(`/${this.baseUrl}/${id}`, updateData)
+      return adaptInstructor(response.data)
+    } catch (error) {
+      console.error(`Failed to update instructor with ID ${id}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Delete an instructor
+   */
+  async deleteInstructor(id: string): Promise<void> {
+    try {
+      await api.delete(`/api${this.baseUrl}/${id}`)
+    } catch (error) {
+      console.error(`Failed to delete instructor with ID ${id}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Upload profile image for an instructor
+   */
+  async uploadProfileImage(id: string, imageFile: File): Promise<Instructor> {
+    try {
+      const formData = new FormData()
+      formData.append("image", imageFile)
+
+      console.log("Uploading profile image:", imageFile.name, imageFile.type, imageFile.size)
+
+      const response = await api.post(`/api${this.baseUrl}/${id}/profile-image`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -287,25 +241,29 @@ class InstructorService {
     }
   }
 
+  /**
+   * Upload certification for an instructor
+   */
   async uploadCertificate(
     id: string,
     certificateFile: File,
-    certificateData: { name: string; issuingOrganization: string; issueDate: string },
+    certificateData: { name: string; issuingOrganization: string; issueDate: string; expiryDate?: string },
   ): Promise<Instructor> {
-    const formData = new FormData()
-
-    // IMPORTANT: Use 'certificate' as the field name to match the backend controller
-    formData.append("certificate", certificateFile)
-
-    // Add metadata
-    formData.append("name", certificateData.name)
-    formData.append("issuingOrganization", certificateData.issuingOrganization)
-    formData.append("issueDate", certificateData.issueDate)
-
-    console.log("Uploading certificate:", certificateFile.name, certificateFile.type, certificateFile.size)
-
     try {
-      const response = await api.post(`${this.baseUrl}/${id}/certificate`, formData, {
+      const formData = new FormData()
+      formData.append("certificate", certificateFile)
+
+      // Add metadata
+      formData.append("name", certificateData.name)
+      formData.append("issuingOrganization", certificateData.issuingOrganization)
+      formData.append("issueDate", certificateData.issueDate)
+      if (certificateData.expiryDate) {
+        formData.append("expiryDate", certificateData.expiryDate)
+      }
+
+      console.log("Uploading certificate:", certificateFile.name, certificateFile.type, certificateFile.size)
+
+      const response = await api.post(`/api${this.baseUrl}/${id}/certificate`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -324,16 +282,17 @@ class InstructorService {
     }
   }
 
+  /**
+   * Upload sports passport for an instructor
+   */
   async uploadSportPassport(id: string, passportFile: File): Promise<Instructor> {
-    const formData = new FormData()
-
-    // IMPORTANT: Use 'passport' as the field name to match the backend controller
-    formData.append("passport", passportFile)
-
-    console.log("Uploading sports passport:", passportFile.name, passportFile.type, passportFile.size)
-
     try {
-      const response = await api.post(`${this.baseUrl}/${id}/sports-passport`, formData, {
+      const formData = new FormData()
+      formData.append("passport", passportFile)
+
+      console.log("Uploading sports passport:", passportFile.name, passportFile.type, passportFile.size)
+
+      const response = await api.post(`/api${this.baseUrl}/${id}/sports-passport`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -352,12 +311,240 @@ class InstructorService {
     }
   }
 
+  // ===== SCHOOL-SPECIFIC INSTRUCTOR ENDPOINTS =====
+
+  /**
+   * Get all instructors for a specific school
+   */
+  async getSchoolInstructors(schoolId: string): Promise<Instructor[]> {
+    try {
+      const response = await api.get(this.getContextUrl(schoolId))
+
+      if (response.data && response.data.instructors && Array.isArray(response.data.instructors)) {
+        return response.data.instructors.map(adaptInstructor)
+      }
+
+      return []
+    } catch (error) {
+      console.error(`Failed to fetch instructors for school ${schoolId}:`, error)
+      return []
+    }
+  }
+
+  /**
+   * Get a specific instructor's details for a school
+   */
+  async getSchoolInstructorById(schoolId: string, instructorId: string): Promise<any> {
+    try {
+      const response = await api.get(`${this.getContextUrl(schoolId)}/${instructorId}`)
+      return response.data
+    } catch (error) {
+      console.error(`Failed to fetch instructor ${instructorId} for school ${schoolId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Add a new instructor to a school
+   */
+  async addInstructorToSchool(schoolId: string, instructor: any): Promise<any> {
+    try {
+      const response = await api.post(this.getContextUrl(schoolId), instructor)
+      return response.data
+    } catch (error) {
+      console.error(`Failed to add instructor to school ${schoolId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Assign an existing instructor to a school
+   */
+  async assignInstructorToSchool(schoolId: string, instructorId: string): Promise<any> {
+    try {
+      const response = await api.put(`${this.getContextUrl(schoolId)}/${instructorId}`)
+      return response.data
+    } catch (error) {
+      console.error(`Failed to assign instructor ${instructorId} to school ${schoolId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Update instructor details for a school
+   */
+  async updateSchoolInstructor(schoolId: string, instructorId: string, updateData: any): Promise<any> {
+    try {
+      const response = await api.put(`${this.getContextUrl(schoolId)}/${instructorId}`, updateData)
+      return response.data
+    } catch (error) {
+      console.error(`Failed to update instructor ${instructorId} for school ${schoolId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Remove instructor from school
+   */
+  async removeInstructorFromSchool(schoolId: string, instructorId: string): Promise<any> {
+    try {
+      const response = await api.delete(`${this.getContextUrl(schoolId)}/${instructorId}`)
+      return response.data
+    } catch (error) {
+      console.error(`Failed to remove instructor ${instructorId} from school ${schoolId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Upload profile image for a school instructor
+   */
+  async uploadSchoolInstructorProfileImage(schoolId: string, instructorId: string, imageFile: File): Promise<any> {
+    try {
+      const formData = new FormData()
+      formData.append("image", imageFile)
+
+      console.log("Uploading profile image for school instructor:", imageFile.name, imageFile.type, imageFile.size)
+
+      const response = await api.post(`${this.getContextUrl(schoolId)}/${instructorId}/profile-image`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+
+      return response.data
+    } catch (error) {
+      console.error(`Failed to upload profile image for instructor ${instructorId} in school ${schoolId}:`, error)
+      throw error
+    }
+  }
+
+  async uploadSchoolInstructorCertificate(
+    schoolId: string,
+    instructorId: string,
+    certificateFile: File,
+    certificationDetails: {
+      name: string
+      issuingOrganization: string
+      issueDate: string
+      expiryDate?: string
+    },
+  ): Promise<any> {
+    try {
+      const formData = new FormData()
+      formData.append("certificate", certificateFile)
+
+      // Add certification details
+      formData.append("name", certificationDetails.name)
+      formData.append("issuingOrganization", certificationDetails.issuingOrganization)
+      formData.append("issueDate", certificationDetails.issueDate)
+
+      if (certificationDetails.expiryDate) {
+        formData.append("expiryDate", certificationDetails.expiryDate)
+      }
+
+      console.log(
+        "Uploading certificate for school instructor:",
+        certificateFile.name,
+        certificateFile.type,
+        certificateFile.size,
+      )
+
+      const response = await api.post(`${this.getContextUrl(schoolId)}/${instructorId}/certificate`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+
+      return response.data
+    } catch (error) {
+      console.error(`Failed to upload certificate for instructor ${instructorId} in school ${schoolId}:`, error)
+      throw error
+    }
+  }
+
+  async uploadSchoolInstructorSportsPassport(schoolId: string, instructorId: string, passportFile: File): Promise<any> {
+    try {
+      const formData = new FormData()
+      formData.append("passport", passportFile)
+
+      console.log(
+        "Uploading sports passport for school instructor:",
+        passportFile.name,
+        passportFile.type,
+        passportFile.size,
+      )
+
+      const response = await api.post(`${this.getContextUrl(schoolId)}/${instructorId}/sports-passport`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+
+      return response.data
+    } catch (error) {
+      console.error(`Failed to upload sports passport for instructor ${instructorId} in school ${schoolId}:`, error)
+      throw error
+    }
+  }
+
+  async getSchoolInstructorFullProfile(schoolId: string, instructorId: string): Promise<SchoolInstructorFullProfile> {
+    try {
+      const response = await api.get(`${this.getContextUrl(schoolId)}/${instructorId}/full-profile`)
+
+      // Process profile images if they exist
+      if (response.data.profileInfo && response.data.profileInfo.profileImages) {
+        response.data.profileInfo.profileImages = response.data.profileInfo.profileImages
+          .map((img: string) => getImageUrl(img))
+          .filter(Boolean)
+      }
+
+      // Process certifications if they exist
+      if (response.data.profileInfo && response.data.profileInfo.certifications) {
+        response.data.profileInfo.certifications = response.data.profileInfo.certifications.map((cert: any) => ({
+          ...cert,
+          documentUrl: getImageUrl(cert.certificateFile),
+        }))
+      }
+
+      // Process sports passport if it exists
+      if (response.data.profileInfo && response.data.profileInfo.sportsPassport) {
+        response.data.profileInfo.sportsPassport = getImageUrl(response.data.profileInfo.sportsPassport)
+      }
+
+      return response.data
+    } catch (error) {
+      console.error(`Failed to fetch full profile for instructor ${instructorId} in school ${schoolId}:`, error)
+      throw error
+    }
+  }
+
   // Helper method to safely open documents
   openDocument(url: string | undefined, errorToast: (message: string) => void): Promise<void> {
     return openDocument(url, errorToast)
   }
+
+  // Ajoutons la méthode pour récupérer toutes les écoles
+  /**
+   * Get all schools
+   */
+  async getAllSchools(): Promise<any[]> {
+    try {
+      const response = await api.get("/api/schools")
+      return Array.isArray(response.data)
+        ? response.data.map((school: any) => ({
+            id: school._id || school.id,
+            name: school.name,
+            address: school.address || "",
+            description: school.description || "",
+          }))
+        : []
+    } catch (error) {
+      console.error("Failed to fetch all schools:", error)
+      return []
+    }
+  }
 }
 
 export const instructorService = new InstructorService()
-export { openDocument }
 

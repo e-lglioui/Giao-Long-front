@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
-import { schoolService } from "../services/school.service"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { TimePickerInput } from "./TimePickerInput"
 import Checkbox from "@/components/ui/checkbox"
+import { schoolAdminService } from "../services/school-admin.service"
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -40,7 +40,7 @@ const createSchoolSchema = z.object({
 
 type FormData = z.infer<typeof createSchoolSchema>
 
-export function CreateSchoolForm({ onSubmitSuccess }: { onSubmitSuccess?: (data: any) => void }) {
+export function SchoolAdminCreateForm() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
@@ -89,18 +89,13 @@ export function CreateSchoolForm({ onSubmitSuccess }: { onSubmitSuccess?: (data:
     console.log("Data before submission:", JSON.stringify(formattedData, null, 2))
     try {
       setIsLoading(true)
-      const createdSchool = await schoolService.createSchool(formattedData)
+      // Using the school admin service instead of the regular school service
+      await schoolAdminService.createSchool(formattedData)
       toast({
         title: "Success",
         description: "School created successfully",
       })
-
-      // Si un callback est fourni, l'appeler avec l'école créée
-      if (onSubmitSuccess) {
-        onSubmitSuccess(createdSchool)
-      } else {
-        navigate("/dashboard/schools")
-      }
+      navigate("/dashboard")
     } catch (error: any) {
       console.error("Error creating school:", error)
       toast({
@@ -131,8 +126,8 @@ export function CreateSchoolForm({ onSubmitSuccess }: { onSubmitSuccess?: (data:
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create New School</CardTitle>
-        <CardDescription>Fill in the details to create a new school in the system</CardDescription>
+        <CardTitle>Create Your School</CardTitle>
+        <CardDescription>As a school admin, you can create one school to manage</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -325,7 +320,7 @@ export function CreateSchoolForm({ onSubmitSuccess }: { onSubmitSuccess?: (data:
             </div>
 
             <div className="flex justify-end gap-4 pt-4">
-              <Button type="button" variant="outline" onClick={() => navigate("/dashboard/schools")}>
+              <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>

@@ -23,9 +23,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import type { Certification } from "../services/instructor.service"
-import { instructorService, handleImageError } from "../services/instructor.service"
+import { instructorService } from "../services/instructor.service"
+import { handleImageError } from "../utils/instructor-utils"
 import { ProfileImageGallery } from "../components/profile-image-gallery"
 import { DocumentViewer } from "../components/document-viewer"
+import { Input } from "@/components/ui/input"
 
 export function InstructorDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -442,19 +444,42 @@ export function InstructorDetailPage() {
                     </div>
                   )}
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex flex-col space-y-4">
+                  <div className="w-full">
+                    <h3 className="text-sm font-medium mb-2">Ajouter une nouvelle certification</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <Input
+                        placeholder="Nom de la certification"
+                        value={newCertification.name}
+                        onChange={(e) => setNewCertification({ ...newCertification, name: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Organisation émettrice"
+                        value={newCertification.issuingOrganization}
+                        onChange={(e) =>
+                          setNewCertification({ ...newCertification, issuingOrganization: e.target.value })
+                        }
+                      />
+                      <Input
+                        type="date"
+                        value={newCertification.issueDate}
+                        onChange={(e) => setNewCertification({ ...newCertification, issueDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
                   <Button
                     variant="outline"
                     className="w-full"
                     onClick={() => certificateFileInputRef.current?.click()}
-                    disabled={uploadLoading}
+                    disabled={uploadLoading || !newCertification.name || !newCertification.issuingOrganization}
                   >
                     {uploadLoading ? (
                       <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full"></div>
                     ) : (
                       <Upload className="h-4 w-4 mr-2" />
                     )}
-                    Ajouter une certification
+                    Télécharger et ajouter une certification
                   </Button>
                   <input
                     ref={certificateFileInputRef}

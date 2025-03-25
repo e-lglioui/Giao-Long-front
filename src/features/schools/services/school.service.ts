@@ -1,5 +1,5 @@
 import api from "@/services/api"
-import type { School, CreateSchoolDto, UpdateSchoolDto, ScheduleDto } from "../types/school.types"
+import type { School } from "../types/school.types"
 
 const SCHOOLS_URL = "http://localhost:3000/schools"
 
@@ -14,7 +14,7 @@ export class ApiError extends Error {
 }
 
 export const schoolService = {
-  async createSchool(schoolData: CreateSchoolDto): Promise<School> {
+  async createSchool(schoolData: any): Promise<School> {
     try {
       console.log("API sending data:", JSON.stringify(schoolData, null, 2))
 
@@ -44,14 +44,23 @@ export const schoolService = {
 
   async getSchoolById(id: string): Promise<School> {
     try {
+      // Basic validation before making the request
+      if (!id) {
+        throw new ApiError("School ID is required", 400)
+      }
+
       const { data } = await api.get<School>(`${SCHOOLS_URL}/${id}`)
       return data
     } catch (error: any) {
+      // More specific error message for not found
+      if (error.response?.status === 404) {
+        throw new ApiError(`School with ID ${id} not found`, 404)
+      }
       throw new ApiError(error.response?.data?.message || "Failed to fetch school", error.response?.status)
     }
   },
 
-  async updateSchool(id: string, schoolData: UpdateSchoolDto): Promise<School> {
+  async updateSchool(id: string, schoolData: any): Promise<School> {
     try {
       const { data } = await api.put<School>(`${SCHOOLS_URL}/${id}`, schoolData)
       return data
@@ -86,7 +95,7 @@ export const schoolService = {
     }
   },
 
-  async updateSchedule(schoolId: string, schedule: ScheduleDto): Promise<School> {
+  async updateSchedule(schoolId: string, schedule: any): Promise<School> {
     try {
       const { data } = await api.patch<School>(`${SCHOOLS_URL}/${schoolId}/schedule`, schedule)
       return data
@@ -98,30 +107,30 @@ export const schoolService = {
   async uploadSingleImage(schoolId: string, file: File): Promise<School> {
     try {
       const formData = new FormData()
-      formData.append('image', file)
-      
+      formData.append("image", file)
+
       const { data } = await api.post<School>(`${SCHOOLS_URL}/${schoolId}/images`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+          "Content-Type": "multipart/form-data",
+        },
       })
       return data
     } catch (error: any) {
       throw new ApiError(error.response?.data?.message || "Failed to upload image", error.response?.status)
     }
   },
-  
+
   async uploadMultipleImages(schoolId: string, files: FileList): Promise<School> {
     try {
       const formData = new FormData()
       for (let i = 0; i < files.length; i++) {
-        formData.append('images', files[i])
+        formData.append("images", files[i])
       }
-      
+
       const { data } = await api.post<School>(`${SCHOOLS_URL}/${schoolId}/multiple-images`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+          "Content-Type": "multipart/form-data",
+        },
       })
       return data
     } catch (error: any) {
@@ -132,14 +141,15 @@ export const schoolService = {
   async deleteImage(schoolId: string, imageUrl: string): Promise<School> {
     try {
       const { data } = await api.delete<School>(`${SCHOOLS_URL}/${schoolId}/images`, {
-        data: { imageUrl }
+        data: { imageUrl },
       })
       return data
     } catch (error: any) {
       throw new ApiError(error.response?.data?.message || "Failed to delete image", error.response?.status)
     }
   },
-  async getSchoolsForMap() {
+
+  async getSchoolsForMap(): Promise<School[]> {
     try {
       const { data } = await api.get<School[]>(`${SCHOOLS_URL}/map`)
       return data
@@ -148,7 +158,7 @@ export const schoolService = {
     }
   },
 
-  async getNearbySchools(latitude: number, longitude: number, maxDistance = 5000) {
+  async getNearbySchools(latitude: number, longitude: number, maxDistance = 5000): Promise<School[]> {
     try {
       const { data } = await api.get<School[]>(
         `${SCHOOLS_URL}/nearby?latitude=${latitude}&longitude=${longitude}&maxDistance=${maxDistance}`,
@@ -158,5 +168,5 @@ export const schoolService = {
       throw new ApiError(error.response?.data?.message || "Failed to fetch nearby schools", error.response?.status)
     }
   },
-
 }
+

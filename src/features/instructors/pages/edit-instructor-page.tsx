@@ -1,5 +1,6 @@
-import { InstructorForm } from '../components/instructor-form';
+import { InstructorForm } from "../components/instructor-form"
 
 export function EditInstructorPage() {
-  return <InstructorForm isEdit={true} />;
+  return <InstructorForm isEdit={true} />
 }
+

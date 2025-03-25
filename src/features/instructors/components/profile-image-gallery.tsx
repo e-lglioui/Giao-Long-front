@@ -5,7 +5,7 @@ import { ChevronRight, Download, Maximize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogClose } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card"
-import { handleImageError } from "../services/instructor.service"
+import { handleImageError } from "../utils/instructor-utils"
 
 interface ProfileImageGalleryProps {
   images: string[]

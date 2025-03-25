@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -12,8 +12,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ArrowLeft, Save, Plus, Minus } from "lucide-react"
-import Checkbox from "@/components/ui/checkbox";
+import Checkbox from "@/components/ui/checkbox"
 import { studentService } from "../services/student.service"
+import { schoolAdminService } from "../../schools/services/school-admin.service"
 
 const studentSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
@@ -23,6 +24,7 @@ const studentSchema = z.object({
   class: z.string().min(1, "La classe est requise"),
   isActive: z.boolean().default(true),
   courses: z.array(z.string()).optional(),
+  school: z.string().optional(), // Add school to the schema
 })
 
 type StudentFormData = z.infer<typeof studentSchema>
@@ -34,6 +36,7 @@ export function CreateStudentPage() {
   const [error, setError] = useState<string | null>(null)
   const [courses, setCourses] = useState<string[]>([])
   const [newCourse, setNewCourse] = useState("")
+  const [schoolId, setSchoolId] = useState<string | null>(null)
 
   const {
     register,
@@ -52,6 +55,24 @@ export function CreateStudentPage() {
     },
   })
 
+  useEffect(() => {
+    const fetchSchoolId = async () => {
+      try {
+        const school = await schoolAdminService.getMySchool()
+        if (school && school._id) {
+          setSchoolId(school._id)
+          // Also store in localStorage for future use
+          localStorage.setItem("currentSchoolId", school._id)
+        }
+      } catch (error) {
+        console.error("Failed to fetch school:", error)
+        setError("Failed to fetch school information. Please try again.")
+      }
+    }
+
+    fetchSchoolId()
+  }, [])
+
   const addCourse = () => {
     if (newCourse.trim() !== "" && !courses.includes(newCourse.trim())) {
       setCourses([...courses, newCourse.trim()])
@@ -67,9 +88,16 @@ export function CreateStudentPage() {
     try {
       setIsLoading(true)
       setError(null)
-      
+
       // Include courses in the data
       data.courses = courses
+
+      // Include the school ID in the data
+      if (schoolId) {
+        data.school = schoolId
+      } else {
+        throw new Error("School ID is required to create a student")
+      }
 
       // Use the service to create the student
       await studentService.createStudent(data)
@@ -258,3 +286,4 @@ export function CreateStudentPage() {
     </div>
   )
 }
+

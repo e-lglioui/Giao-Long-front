@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { FileText, Download, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { openDocument } from "../services/instructor.service"
+import { openDocument } from "../utils/instructor-utils"
 import { useToast } from "@/hooks/use-toast"
 
 interface DocumentViewerProps {

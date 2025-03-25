@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -10,21 +10,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
-import { schoolService } from "../services/school.service"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { TimePickerInput } from "./TimePickerInput"
 import Checkbox from "@/components/ui/checkbox"
+import { schoolAdminService } from "../services/school-admin.service"
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 // Schema matches backend expectations
-const createSchoolSchema = z.object({
+const updateSchoolSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   address: z.string().min(5, "Address must be at least 5 characters"),
   contactNumber: z.string().optional(),
   description: z.string().optional(),
   maxStudents: z.number().min(1).optional(),
-  images: z.array(z.string()).optional(),
   schedule: z.object({
     openingTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Must be in 24-hour format (HH:MM)"),
     closingTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Must be in 24-hour format (HH:MM)"),
@@ -38,21 +37,21 @@ const createSchoolSchema = z.object({
     .optional(),
 })
 
-type FormData = z.infer<typeof createSchoolSchema>
+type FormData = z.infer<typeof updateSchoolSchema>
 
-export function CreateSchoolForm({ onSubmitSuccess }: { onSubmitSuccess?: (data: any) => void }) {
+export function SchoolAdminEditForm() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
 
   const form = useForm<FormData>({
-    resolver: zodResolver(createSchoolSchema),
+    resolver: zodResolver(updateSchoolSchema),
     defaultValues: {
       name: "",
       address: "",
       contactNumber: "",
       description: "",
-      images: [],
       maxStudents: undefined,
       schedule: {
         openingTime: "08:00",
@@ -65,6 +64,46 @@ export function CreateSchoolForm({ onSubmitSuccess }: { onSubmitSuccess?: (data:
       },
     },
   })
+
+  useEffect(() => {
+    const fetchSchool = async () => {
+      try {
+        setInitialLoading(true)
+        const school = await schoolAdminService.getMySchool()
+
+        // Set form values from fetched school
+        form.reset({
+          name: school.name,
+          address: school.address || "",
+          contactNumber: school.contactNumber || "",
+          description: school.description || "",
+          maxStudents: school.maxStudents,
+          schedule: {
+            openingTime: school.schedule?.openingTime || "08:00",
+            closingTime: school.schedule?.closingTime || "18:00",
+            operatingDays: school.schedule?.operatingDays || ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+          },
+          location: school.location
+            ? {
+                latitude: school.location.latitude,
+                longitude: school.location.longitude,
+              }
+            : undefined,
+        })
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load school data",
+          variant: "destructive",
+        })
+        navigate("/dashboard")
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+
+    fetchSchool()
+  }, [form, navigate, toast])
 
   const onSubmit = async (data: FormData) => {
     // Format location data, ensuring numbers for lat/lng
@@ -86,26 +125,19 @@ export function CreateSchoolForm({ onSubmitSuccess }: { onSubmitSuccess?: (data:
       location: location && location.latitude !== undefined && location.longitude !== undefined ? location : undefined,
     }
 
-    console.log("Data before submission:", JSON.stringify(formattedData, null, 2))
     try {
       setIsLoading(true)
-      const createdSchool = await schoolService.createSchool(formattedData)
+      await schoolAdminService.updateMySchool(formattedData)
       toast({
         title: "Success",
-        description: "School created successfully",
+        description: "School updated successfully",
       })
-
-      // Si un callback est fourni, l'appeler avec l'école créée
-      if (onSubmitSuccess) {
-        onSubmitSuccess(createdSchool)
-      } else {
-        navigate("/dashboard/schools")
-      }
+      navigate("/dashboard")
     } catch (error: any) {
-      console.error("Error creating school:", error)
+      console.error("Error updating school:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create school",
+        description: error instanceof Error ? error.message : "Failed to update school",
         variant: "destructive",
       })
     } finally {
@@ -128,11 +160,19 @@ export function CreateSchoolForm({ onSubmitSuccess }: { onSubmitSuccess?: (data:
     form.setValue("schedule.operatingDays", currentDays, { shouldValidate: true })
   }
 
+  if (initialLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create New School</CardTitle>
-        <CardDescription>Fill in the details to create a new school in the system</CardDescription>
+        <CardTitle>Edit Your School</CardTitle>
+        <CardDescription>Update your school information</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -325,11 +365,11 @@ export function CreateSchoolForm({ onSubmitSuccess }: { onSubmitSuccess?: (data:
             </div>
 
             <div className="flex justify-end gap-4 pt-4">
-              <Button type="button" variant="outline" onClick={() => navigate("/dashboard/schools")}>
+              <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : "Create School"}
+                {isLoading ? "Updating..." : "Update School"}
               </Button>
             </div>
           </form>
