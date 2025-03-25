@@ -1,0 +1,26 @@
+# Use a Node.js image
+FROM node:20-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and package-lock.json to leverage Docker cache
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the entire frontend code
+COPY . .
+
+# Build the app
+RUN npm run build
+
+# Serve using a lightweight HTTP server like serve
+RUN npm install -g serve
+
+# Expose port 80
+EXPOSE 80
+
+# Serve the built app
+CMD ["serve", "-s", "dist", "-l", "80"]

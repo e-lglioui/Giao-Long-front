@@ -23,7 +23,7 @@ import { Search, Plus, MoreHorizontal, Edit, Trash2, UserCog } from "lucide-reac
 import { MySchoolCheck } from "../components/my-school-check"
 import { schoolAdminService } from "../services/school-admin.service"
 
-// Mock data for staff members
+
 const mockStaffMembers = [
   {
     id: "1",

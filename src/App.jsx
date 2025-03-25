@@ -42,7 +42,7 @@ import { InstructorFullProfilePage } from "@/features/instructors/pages/instruct
 import { SchoolAdminImageUpload } from "@/features/schools/components/SchoolAdminImageUpload"
 // New pages
 import StaffManagement from "@/features/schools/pages/staff-management "
-import EventsManagement from "@/features/schools/pages/events-management"
+
 import PaymentManagement from "@/features/schools/pages/payment-management"
 import {Homepage} from "@/pages/Homepage"
 import SchoolDetail from"@/pages/SchoolDetail"
@@ -132,7 +132,7 @@ function App() {
 
           {/* New Routes */}
           <Route path="staff" element={<StaffManagement />} />
-          <Route path="events-management" element={<EventsManagement />} />
+      
           <Route path="payments" element={<PaymentManagement />} />
         </Route>
 
